@@ -1,0 +1,229 @@
+{
+  "manifestVersion": 2,
+  "id": "codex-reading",
+  "name": "Codex会话",
+  "version": "0.4.8",
+  "description": "把 Codex 的回复风格作为 Hana 原会话的可选提示词层；默认保留 Hana 原生风格，不创建卡片。",
+  "entry": "index.js",
+  "capabilities": [
+    "app/hooks.agent-before-start",
+    "app/process.spawn"
+  ],
+  "contributes": {
+    "settings": {
+      "title": "Codex会话",
+      "ui": {
+        "route": "/settings.html"
+      },
+      "schema": {
+        "properties": {
+          "styleProfile": {
+            "type": "string",
+            "title": "基础风格和语气",
+            "description": "选择回复的整体语气；默认选项不会修改 Hana 原有提示词。",
+            "enum": [
+              "hana",
+              "codex-default",
+              "professional",
+              "friendly",
+              "candid",
+              "quirky",
+              "efficient",
+              "cynical"
+            ],
+            "ui": {
+              "enumLabels": [
+                "Hana 原生（不注入）",
+                "Codex 默认 · 预设风格和语调",
+                "专业可靠 · 精雕细琢",
+                "亲和友善 · 温和健谈",
+                "直言不讳 · 直率乐观",
+                "天马行空 · 趣味幻想",
+                "高效务实 · 简练直白",
+                "吐槽达人 · 犀利毒舌"
+              ]
+            },
+            "default": "hana",
+            "scope": "global"
+          },
+          "friendliness": {
+            "type": "string",
+            "title": "亲切程度",
+            "description": "选择回复语气的亲和友善程度。",
+            "enum": [
+              "default",
+              "increase",
+              "decrease"
+            ],
+            "ui": {
+              "enumLabels": [
+                "默认",
+                "增强 · 更友好、更亲近",
+                "减弱 · 更专业、事实性更强"
+              ]
+            },
+            "default": "default",
+            "scope": "global"
+          },
+          "enthusiasm": {
+            "type": "string",
+            "title": "热情程度",
+            "description": "选择回复语气的热情程度。",
+            "enum": [
+              "default",
+              "increase",
+              "decrease"
+            ],
+            "ui": {
+              "enumLabels": [
+                "默认",
+                "增强 · 更加活力充沛",
+                "减弱 · 更加冷静中立"
+              ]
+            },
+            "default": "default",
+            "scope": "global"
+          },
+          "emoji": {
+            "type": "string",
+            "title": "表情符号",
+            "description": "选择在回复中使用表情符号的频率。",
+            "enum": [
+              "default",
+              "increase",
+              "decrease"
+            ],
+            "ui": {
+              "enumLabels": [
+                "默认",
+                "增强 · 使用更多表情符号",
+                "减弱 · 尽量少用表情符号"
+              ]
+            },
+            "default": "default",
+            "scope": "global"
+          },
+          "visual": {
+            "type": "string",
+            "title": "可视化回答",
+            "description": "在标准回复和包含更多视觉或互动内容的回复之间选择。",
+            "enum": [
+              "default",
+              "concise"
+            ],
+            "ui": {
+              "enumLabels": [
+                "默认",
+                "简洁"
+              ]
+            },
+            "default": "default",
+            "scope": "global"
+          },
+          "headings": {
+            "type": "string",
+            "title": "标题和列表",
+            "description": "选择回复中标题和列表的使用频率。",
+            "enum": [
+              "default",
+              "increase",
+              "decrease"
+            ],
+            "ui": {
+              "enumLabels": [
+                "默认",
+                "增强 · 采用清晰格式与列表结构",
+                "减弱 · 更多段落文本，而非列表结构"
+              ]
+            },
+            "default": "default",
+            "scope": "global"
+          },
+          "typographyEnabled": {
+            "type": "boolean",
+            "title": "启用排版覆盖",
+            "description": "按下面的字体与排版显示回复。需要先安装外观补丁。",
+            "default": false,
+            "scope": "global"
+          },
+          "contentFontPreset": {
+            "type": "string",
+            "title": "内容字体",
+            "description": "系统无衬线最接近 Codex；跟随 Hana 则保持当前阅读字体。",
+            "enum": ["inherit", "sans", "serif", "custom"],
+            "ui": {
+              "enumLabels": [
+                "跟随 Hana（不改）",
+                "系统无衬线 · 接近 Codex",
+                "霞鹜新致宋 · Hana 阅读字体",
+                "自定义字体"
+              ]
+            },
+            "default": "inherit",
+            "scope": "global"
+          },
+          "contentFontCustom": {
+            "type": "string",
+            "title": "自定义字体名",
+            "description": "仅当内容字体选了“自定义字体”时使用，填本机已安装的字体名。",
+            "default": "",
+            "scope": "global"
+          },
+          "contentFontSize": {
+            "type": "number",
+            "title": "正文字号",
+            "description": "回复正文的字号，单位 px。Codex 默认约 16。",
+            "default": 16,
+            "scope": "global"
+          },
+          "lineHeight": {
+            "type": "number",
+            "title": "行高",
+            "description": "回复正文的行高倍数。Codex 默认约 1.75。",
+            "default": 1.75,
+            "scope": "global"
+          },
+          "paragraphGap": {
+            "type": "number",
+            "title": "段落间距",
+            "description": "段落之间的间距，单位 em。",
+            "default": 0.9,
+            "scope": "global"
+          },
+          "columnWidth": {
+            "type": "number",
+            "title": "聊天列宽",
+            "description": "回复文字区域的最大宽度，单位 px。Codex 约 720。",
+            "default": 720,
+            "scope": "global"
+          },
+          "linkStyle": {
+            "type": "string",
+            "title": "超链接样式",
+            "description": "选择回复中超链接的显示方式。",
+            "enum": ["theme", "underline", "plain"],
+            "ui": { "enumLabels": ["跟随主题", "下划线", "无下划线 · 细底边"] },
+            "default": "theme",
+            "scope": "global"
+          },
+          "codeFontSize": {
+            "type": "number",
+            "title": "代码字号",
+            "description": "回复中代码块和行内代码的字号，单位 px。",
+            "default": 13,
+            "scope": "global"
+          },
+          "customInstructions": {
+            "type": "string",
+            "title": "自定义指令",
+            "description": "可选。原样追加到这个风格层，不覆盖 Hana 的角色、安全规则和任务指令。",
+            "default": "",
+            "scope": "global"
+          }
+        }
+      }
+    }
+  },
+  "icon": "assets/icon.png",
+  "minAppVersion": "1.5.118-beta"
+}

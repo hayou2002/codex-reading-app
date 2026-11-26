@@ -1,0 +1,22 @@
+# 构建环境与打包产物
+work/electron/
+work/npm/
+work/backups/
+work/dist/
+outputs/
+*.zip
+
+# 依赖与缓存
+node_modules/
+.cache/
+*.log
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# 运行时数据
+app-data/
+patch-state.json
