@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "codex-reading",
   "name": "Codex会话",
-  "version": "0.4.8",
+  "version": "0.5.0",
   "description": "把 Codex 的回复风格作为 Hana 原会话的可选提示词层；默认保留 Hana 原生风格，不创建卡片。",
   "entry": "index.js",
   "capabilities": [

@@ -176,16 +176,30 @@ body {
 
 .control {
   flex: none;
-  display: flex;
+  display: grid;
+  grid-template-columns: 200px 26px;
   align-items: center;
-  gap: 6px;
-  max-width: 100%;
+  gap: 0 6px;
+}
+
+.control.is-switch {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.control > .unit {
+  color: var(--text-light, var(--codex-muted));
+  font-size: 12.5px;
+  white-space: nowrap;
 }
 
 select,
 input[type="number"],
 input[type="text"],
 textarea {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
   border: 1px solid var(--border, var(--codex-border));
   border-radius: var(--radius-input, 8px);
   background: var(--bg, var(--codex-input));
@@ -195,20 +209,15 @@ textarea {
 }
 
 select {
-  min-width: 120px;
-  max-width: min(280px, 100%);
   padding: 5px 9px;
 }
 
 input[type="number"] {
-  width: 88px;
-  min-width: 88px;
   padding: 5px 9px;
   text-align: right;
 }
 
 input[type="text"] {
-  width: 200px;
   padding: 5px 9px;
 }
 
@@ -286,6 +295,7 @@ textarea {
 
 .row.stacked .control {
   margin-top: 8px;
+  display: block;
 }
 
 @media (max-width: 560px) {
@@ -295,5 +305,6 @@ textarea {
 
   .control {
     margin-top: 8px;
+    grid-template-columns: minmax(0, 1fr) 26px;
   }
 }

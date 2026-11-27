@@ -269,16 +269,8 @@ function buildControl(key, prop, current) {
     input.type = "number";
     input.step = key === "lineHeight" || key === "paragraphGap" ? "0.05" : "1";
     input.value = String(current ?? prop.default ?? 0);
-    const unit = document.createElement("span");
-    unit.className = "row-desc";
-    unit.textContent = key === "paragraphGap" ? "em" : key === "lineHeight" ? "倍" : "px";
-    const wrap = document.createElement("div");
-    wrap.style.display = "flex";
-    wrap.style.alignItems = "center";
-    wrap.style.gap = "6px";
-    wrap.append(input, unit);
     state.controls.set(key, () => Number(input.value));
-    return wrap;
+    return input;
   }
 
   const input = document.createElement("input");
@@ -288,6 +280,14 @@ function buildControl(key, prop, current) {
   state.controls.set(key, () => input.value);
   return input;
 }
+
+const UNITS = {
+  contentFontSize: "px",
+  lineHeight: "倍",
+  paragraphGap: "em",
+  columnWidth: "px",
+  codeFontSize: "px",
+};
 
 function renderGroup(group) {
   const section = document.createElement("section");
@@ -331,7 +331,10 @@ function renderGroup(group) {
 
     const control = document.createElement("div");
     control.className = "control";
-    if (key === "customInstructions") {
+    if (prop.type === "boolean") {
+      control.classList.add("is-switch");
+      control.appendChild(buildControl(key, prop, state.values[key]));
+    } else if (key === "customInstructions") {
       const textarea = document.createElement("textarea");
       textarea.value = String(state.values[key] ?? prop.default ?? "");
       textarea.placeholder = "例如：所有回复先给结论，再给最多三条依据。";
@@ -339,6 +342,10 @@ function renderGroup(group) {
       control.appendChild(textarea);
     } else {
       control.appendChild(buildControl(key, prop, state.values[key]));
+      const unit = document.createElement("span");
+      unit.className = "unit";
+      unit.textContent = UNITS[key] ?? "";
+      control.appendChild(unit);
     }
 
     row.append(main, control);

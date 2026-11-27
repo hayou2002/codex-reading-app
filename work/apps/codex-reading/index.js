@@ -13,8 +13,8 @@ const HOME_DIR = path.resolve(APP_DIR, "..", "..");
 const DATA_DIR = path.join(HOME_DIR, "app-data", "codex-reading");
 const PAYLOAD_PATH = path.join(DATA_DIR, "codex-payload.json");
 const STATE_PATH = path.join(DATA_DIR, "patch-state.json");
-const APPLY_SCRIPT = path.join(APP_DIR, "patch", "apply.ps1");
-const RESTORE_SCRIPT = path.join(APP_DIR, "patch", "restore.ps1");
+const APPLY_SCRIPT = path.join(APP_DIR, "patch", "apply.mjs");
+const RESTORE_SCRIPT = path.join(APP_DIR, "patch", "restore.mjs");
 const KNOWN_KEYS = new Set([
   "styleProfile",
   "friendliness",
@@ -34,13 +34,38 @@ const KNOWN_KEYS = new Set([
   "customInstructions",
 ]);
 
-function runPowerShell(script, args) {
+let cachedNodePath;
+
+async function resolveNodePath(sdk) {
+  if (cachedNodePath) return cachedNodePath;
+  const fromEnv = (process.env.HANA_NODE_RUNTIME ?? "").trim();
+  if (fromEnv) {
+    cachedNodePath = fromEnv;
+    return cachedNodePath;
+  }
+  try {
+    const info = await sdk.process.resolveExecutable({ candidates: ["node", "node.exe"] });
+    if (info?.path) {
+      cachedNodePath = info.path;
+      return cachedNodePath;
+    }
+  } catch {}
+  return null;
+}
+
+function sandboxArgs() {
+  const sandboxed = process.execArgv.some((arg) => arg === "--permission" || arg.startsWith("--experimental-permission"));
+  if (!sandboxed) return [];
+  const rendererRoot = path.join(HOME_DIR, "artifacts", "renderer");
+  return [`--allow-fs-read=${rendererRoot}`, `--allow-fs-write=${rendererRoot}`];
+}
+
+function spawnOnce(exe, script, args) {
   return new Promise((resolve) => {
-    const child = spawn(
-      "powershell.exe",
-      ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", script, ...args],
-      { windowsHide: true },
-    );
+    const child = spawn(exe, [...sandboxArgs(), script, ...args], {
+      windowsHide: true,
+      env: { ...process.env, NODE_OPTIONS: "" },
+    });
     let stdout = "";
     let stderr = "";
     let settled = false;
@@ -64,6 +89,22 @@ function runPowerShell(script, args) {
       finish({ ok: code === 0, code, output: `${stdout}${stderr}`.trim() });
     });
   });
+}
+
+async function runNode(script, args, sdk) {
+  const candidates = [await resolveNodePath(sdk), process.execPath].filter(Boolean);
+  const tried = [];
+  for (const exe of candidates) {
+    const result = await spawnOnce(exe, script, args);
+    if (result.ok) return result;
+    tried.push(`${path.basename(exe)}: ${result.output.split("\n")[0].slice(0, 160)}`);
+    if (!/ERR_ACCESS_DENIED|ENOENT|EACCES|EINVAL/.test(result.output)) return result;
+  }
+  return {
+    ok: false,
+    code: -1,
+    output: `找不到可用的 Node 运行时。已尝试：\n${tried.map((line) => `- ${line}`).join("\n")}\n请安装 Node.js，或把 HANA_NODE_RUNTIME 指向 node 可执行文件。`,
+  };
 }
 
 export default defineApp(async (sdk) => {
@@ -102,16 +143,16 @@ export default defineApp(async (sdk) => {
     } catch (error) {
       return { ok: false, code: -1, output: `payload write failed: ${error instanceof Error ? error.message : String(error)}` };
     }
-    return runPowerShell(APPLY_SCRIPT, [
-      "-HanaHome", HOME_DIR,
-      "-AppDir", APP_DIR,
-      "-PayloadPath", PAYLOAD_PATH,
-      "-StatePath", STATE_PATH,
-    ]);
+    return runNode(APPLY_SCRIPT, [
+      "--home", HOME_DIR,
+      "--app", APP_DIR,
+      "--payload", PAYLOAD_PATH,
+      "--state", STATE_PATH,
+    ], sdk);
   };
 
   const restorePatch = () =>
-    runPowerShell(RESTORE_SCRIPT, ["-HanaHome", HOME_DIR, "-StatePath", STATE_PATH]);
+    runNode(RESTORE_SCRIPT, ["--home", HOME_DIR, "--state", STATE_PATH], sdk);
 
   sdk.routes.register((app) => {
     app.get("/state", async (c) => {
@@ -164,6 +205,7 @@ export default defineApp(async (sdk) => {
       }
       return c.json({ ...result, patch: await readPatchState() }, result.ok ? 200 : 500);
     });
+
   });
 
   try {

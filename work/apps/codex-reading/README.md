@@ -14,6 +14,12 @@
 
 默认选择 `hana`，不注入任何内容，Hana 原有角色、记忆、提示词和沟通方式不变。只有选择 Codex 风格或调整维度后，才会在系统提示末尾追加一个带标记的独立块；切换到 `hana` 会移除该块，不会删除 Hana 原有提示词。
 
+## 排版覆盖
+
+`typographyEnabled` 打开后，应用把一份只作用于助手回复的排版层放进 Hana 的渲染目录，控制正文字体、字号、行高、段落间距、聊天列宽、超链接样式和代码字号。样式只命中 `[class*="_messageAssistant_"] .md-content`，不改侧边栏、设置页和用户自己的消息。
+
+安装与恢复由 `patch/apply.mjs`、`patch/restore.mjs` 完成，用 Hana 自带的 Node 运行，不依赖 PowerShell；Windows / macOS / Linux 走同一套代码。宿主把渲染目录作为读写根传给子进程，因此不需要额外安装运行时。首次写入注入标签后要重启一次 Hana，之后改设置约 2 秒生效。
+
 ## 来源
 
 - Codex 基础提示词、模型指令和最终回复规则：`openai/codex`，Apache-2.0，安装包内 `sources/codex/` 保留原文。
